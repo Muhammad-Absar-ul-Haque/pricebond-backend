@@ -1,0 +1,41 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum UserStatus {
+  PENDING
+  ACTIVE
+  REJECTED
+}
+
+model User {
+  id            String    @id @default(cuid())
+  firstName     String
+  lastName      String
+  email         String    @unique
+  mobile        String
+  pin           String    // bcrypt hashed
+  address       String
+  city          String
+  role          Role      @default(USER)
+  status        UserStatus @default(PENDING)
+  otpCode       String?   // nullable, cleared after verification
+  otpExpiresAt  DateTime? // nullable, 5 min expiry
+  otpVerified   Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("users")
+}
