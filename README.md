@@ -1,6 +1,18 @@
-# 🏆 PrizeBond PK — NestJS Backend
+# 📦 PrizeBond App – Backend
 
-Complete backend API with JWT auth, Prisma ORM, and PostgreSQL.
+A production-ready backend application built with **NestJS**, **PostgreSQL**, and **Prisma ORM**.  
+This README explains how to set up, run, and share the project when distributing it as a ZIP file.
+
+---
+
+## 🚀 Tech Stack
+
+- Node.js (LTS)
+- NestJS
+- PostgreSQL
+- Prisma ORM
+- JWT Authentication
+- Swagger API Documentation
 
 ---
 
@@ -8,151 +20,220 @@ Complete backend API with JWT auth, Prisma ORM, and PostgreSQL.
 
 ```
 prizebond-backend/
-├── src/
-│   ├── main.ts                          # Entry point
-│   ├── app.module.ts                    # Root module
-│   ├── auth/
-│   │   ├── dto/auth.dto.ts              # All request DTOs with validation
-│   │   ├── auth.controller.ts           # Route handlers
-│   │   ├── auth.service.ts              # Business logic
-│   │   ├── auth.module.ts               # Auth module
-│   │   └── jwt.strategy.ts              # JWT Passport strategy
-│   ├── users/
-│   │   ├── users.controller.ts
-│   │   ├── users.service.ts
-│   │   └── users.module.ts
-│   ├── prisma/
-│   │   ├── prisma.service.ts            # PrismaClient wrapper
-│   │   └── prisma.module.ts             # Global Prisma module
-│   └── common/
-│       ├── guards/jwt-auth.guard.ts     # JWT Guard
-│       └── decorators/current-user.decorator.ts
 ├── prisma/
-│   └── schema.prisma                    # Database schema
-├── .env                                 # Environment variables
-└── package.json
+│   ├── schema.prisma
+│   └── migrations/
+├── src/
+│   ├── auth/
+│   ├── users/
+│   ├── admin/
+│   ├── common/
+│   ├── config/
+│   ├── app.module.ts
+│   └── main.ts
+├── .env.example
+├── package.json
+├── tsconfig.json
+└── README.md
 ```
 
 ---
 
-## 🚀 Setup Instructions
+## ⚙️ Prerequisites
 
-### Prerequisites
-- Node.js v18+
-- PostgreSQL installed and running
+Ensure the following are installed:
+
+- Node.js >= 18
+- PostgreSQL >= 13
 - npm or yarn
 
-### Step 1 — Install dependencies
-```bash
+Check versions:
+```
+node -v
+npm -v
+psql --version
+```
+
+---
+
+## 🔐 Environment Variables
+
+Create a `.env` file in the root directory using `.env.example`.
+
+Example:
+```
+APP_PORT=3000
+NODE_ENV=development
+
+DATABASE_URL="postgresql://postgres:password@localhost:5432/prizebond_db"
+
+JWT_SECRET=supersecretkey
+JWT_EXPIRES_IN=7d
+```
+
+---
+
+## 🗄️ Database & Prisma Setup
+
+Install dependencies:
+```
 npm install
 ```
 
-### Step 2 — Configure environment
-Edit `.env` file:
-```env
-DATABASE_URL="postgresql://postgres:yourpassword@localhost:5432/prizebond?schema=public"
-JWT_SECRET="your-super-secret-key"
-JWT_EXPIRES_IN="7d"
-PORT=3000
+Generate Prisma Client:
 ```
-Replace `yourpassword` with your PostgreSQL password.
-
-### Step 3 — Create database
-In PostgreSQL, create the database:
-```sql
-CREATE DATABASE prizebond;
-```
-
-### Step 4 — Run Prisma migration
-```bash
-npx prisma migrate dev --name init
-```
-
-### Step 5 — Generate Prisma client
-```bash
 npx prisma generate
 ```
 
-### Step 6 — Start the server
-```bash
+Run migrations:
+```
+npx prisma migrate deploy
+```
+
+(For development)
+```
+npx prisma migrate dev
+```
+
+---
+
+## ▶️ Running the Project
+
+Development mode:
+```
 npm run start:dev
 ```
 
-Server runs at: `http://localhost:3000/api`
-
----
-
-## 📡 API Endpoints
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| POST | `/api/auth/register` | ❌ | Register new user |
-| POST | `/api/auth/login` | ❌ | Login + get JWT token |
-| POST | `/api/auth/send-otp` | ❌ | Send OTP to email (mock) |
-| POST | `/api/auth/verify-otp` | ❌ | Verify OTP code |
-| POST | `/api/auth/reset-pin` | ❌ | Reset PIN after OTP verify |
-| GET | `/api/auth/me` | ✅ JWT | Get current user profile |
-| GET | `/api/users` | ✅ JWT | List all users |
-| GET | `/api/users/:id` | ✅ JWT | Get user by ID |
-
----
-
-## 📋 Request & Response Examples
-
-### Register
+Production mode:
 ```
-POST /api/auth/register
-{
-  "firstName": "Ali",
-  "lastName": "Khan",
-  "email": "ali@example.com",
-  "mobile": "03001234567",
-  "pin": "1234",
-  "confirmPin": "1234",
-  "address": "House 12, Street 4",
-  "city": "Karachi",
-  "role": "USER"
-}
+npm run build
+npm run start:prod
 ```
 
-### Login
+Server runs at:
 ```
-POST /api/auth/login
-{ "email": "ali@example.com", "pin": "1234" }
-
-Response: { "success": true, "token": "eyJ...", "user": { ... } }
-```
-
-### Send OTP
-```
-POST /api/auth/send-otp
-{ "email": "ali@example.com" }
-// OTP printed to server console
-```
-
-### Verify OTP
-```
-POST /api/auth/verify-otp
-{ "email": "ali@example.com", "otp": "4567" }
-```
-
-### Reset PIN
-```
-POST /api/auth/reset-pin
-{ "email": "ali@example.com", "newPin": "5678", "confirmPin": "5678" }
-```
-
-### Get Me (Protected)
-```
-GET /api/auth/me
-Headers: { Authorization: "Bearer eyJ..." }
+http://localhost:3000
 ```
 
 ---
 
-## 🔒 Security Notes
-- PINs are hashed with bcrypt (10 salt rounds)
-- JWT tokens expire in 7 days
-- OTP codes expire in 5 minutes
-- Sensitive fields (pin, otpCode) never returned in responses
-- OTP fields cleared after successful PIN reset
+## 📘 API Documentation (Swagger)
+
+Access Swagger UI at:
+```
+http://localhost:3000/api/docs
+```
+
+---
+
+## 🔑 Authentication
+
+- Login/Register returns JWT token
+- Use token in headers:
+```
+Authorization: Bearer <TOKEN>
+```
+
+---
+
+## 📦 How to Run After Receiving ZIP
+
+1. Unzip the project
+2. Open terminal in project folder
+3. Install dependencies:
+   ```
+   npm install
+   ```
+4. Create `.env` file
+5. Setup database:
+   ```
+   npx prisma generate
+   npx prisma migrate deploy
+   ```
+6. Start server:
+   ```
+   npm run start:dev
+   ```
+
+---
+
+## ❗ Common Issues
+
+**Prisma error**
+```
+npx prisma generate
+```
+
+**Database connection failed**
+- Check DATABASE_URL
+- Ensure PostgreSQL is running
+
+---
+
+## 👨‍💻 Author
+
+Muhammad Absar  
+Backend Developer – NestJS | PostgreSQL | Prisma
+
+---
+
+## 📄 License
+
+For educational and internal use only.
+
+## Email Sending Behavior (SMTP & Fallback Logging)
+
+This project includes an email notification system that sends emails when admins perform actions (e.g. user approval, rejection, suspension).
+
+The behavior automatically changes based on environment variables.
+
+## When Emails ARE Sent (SMTP Enabled)
+
+Emails are sent only if all required SMTP environment variables are present.
+
+Add the following to your .env file:
+
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your_email@gmail.com
+SMTP_PASS=your_app_password
+EMAIL_FROM="PrizeBond App <no-reply@prizebond.com>"
+
+When these variables are configured:
+
+Real emails are sent using SMTP
+
+EmailService logs:
+
+📧 Email service ENABLED (SMTP configured)
+📧 Email sent to user@email.com
+
+## When Emails Are NOT Sent (SMTP Disabled)
+
+If any SMTP environment variable is missing, emails will NOT be sent.
+
+This commonly happens in:
+
+Local development
+
+Testing environments
+
+CI pipelines
+
+Instead of sending emails, the system will:
+
+❌ Skip SMTP sending
+
+✅ Log the full email content to the console
+
+## Example console output:
+
+📧 Email service DISABLED (SMTP env missing)
+📨 Email NOT sent (development mode)
+----------------------------------------
+FROM: PrizeBond App <no-reply@localhost>
+TO: user@email.com
+SUBJECT: Your account has been approved
+BODY (HTML):
+<p>Your account is now active. You can log in and start using the app.</p>
+----------------------------------------

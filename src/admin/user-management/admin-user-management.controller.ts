@@ -1,5 +1,5 @@
 import { Controller, Get, Patch, Param, Body, UseGuards, Query } from '@nestjs/common';
-import { AdminUserManagementService } from './admin-user-management.service';
+import { UserManagementService } from './admin-user-management.service';
 import { UpdateUserStatusDto } from './dto/update-user-status.dto';
 import { ListUsersDto } from './dto/list-users.dto';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -16,7 +16,7 @@ import {
 @Controller('admin/user-management')
 @UseGuards(RolesGuard)
 export class AdminUserManagementController {
-  constructor(private readonly userManagementService: AdminUserManagementService) {}
+  constructor(private readonly userManagementService: UserManagementService) {}
 
   // ─── List users by status ───────────────────────────────────────────────
   @Get('users')
