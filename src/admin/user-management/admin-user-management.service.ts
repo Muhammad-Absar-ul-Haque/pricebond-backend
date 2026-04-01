@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable, NotFoundException, Logger } from "@nestjs/common";
 import { PrismaService } from "../../prisma/prisma.service";
 import { Prisma } from "@prisma/client";
 import { EmailService } from "../../common/email/email.service";
@@ -7,6 +7,8 @@ import { UserStatus } from '@prisma/client';
 
 @Injectable()
 export class UserManagementService {
+  private readonly logger = new Logger(UserManagementService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly emailService: EmailService,
@@ -49,7 +51,7 @@ export class UserManagementService {
       },
     });
 
-    // 📧 Send email after status change
+    // 📧 Send email after status change -- Handled inside sendStatusEmail (with logging)
     await this.sendStatusEmail(updatedUser.email, dto);
 
     return {
@@ -75,6 +77,20 @@ export class UserManagementService {
         break;
     }
 
-    await this.emailService.sendMail(email, subject, html);
+    if (subject && html) {
+      try {
+        await this.emailService.sendMail(email, subject, html);
+      } catch (error) {
+        this.logger.error(
+          `❌ Failed to send status update email to ${email}`,
+          error.stack,
+        );
+        this.logger.error(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+        this.logger.error(`📧 FAILED EMAIL CONTENT:`);
+        this.logger.error(`SUBJECT: ${subject}`);
+        this.logger.error(`BODY: ${html}`);
+        this.logger.error(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+      }
+    }
   }
 }
