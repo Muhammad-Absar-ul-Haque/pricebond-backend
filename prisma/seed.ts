@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Starting database seeding...');
 
-  const pin = '123456';
+  const pin = '1234';
   const hashedPin = await bcrypt.hash(pin, 10);
 
   const admins = [
