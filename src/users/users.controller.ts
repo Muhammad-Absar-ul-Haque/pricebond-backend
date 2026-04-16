@@ -40,7 +40,7 @@ export class UsersController {
   @ApiBearerAuth()
   @ApiOperation({ summary: "Update user profile details" })
   @ApiBody({ type: UpdateUserDto })
-  update(@Param("id") id: string, @Body() dto: UpdateUserDto) {
+  update(@Param("id", ParseIntPipe) id: number, @Body() dto: UpdateUserDto) {
     return this.usersService.update(id, dto);
   }
 }
