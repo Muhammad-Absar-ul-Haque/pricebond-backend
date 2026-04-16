@@ -15,6 +15,7 @@ export class UsersService {
         email: true,
         mobile: true,
         role: true,
+        status: true,
         address: true,
         city: true,
         createdAt: true,
@@ -38,8 +39,33 @@ export class UsersService {
         email: true,
         mobile: true,
         role: true,
+        status: true,
         city: true,
         createdAt: true,
+      },
+    });
+  }
+
+  async update(id: string, dto: any) {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user) {
+      throw new NotFoundException('User not found.');
+    }
+
+    return this.prisma.user.update({
+      where: { id },
+      data: dto,
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        mobile: true,
+        address: true,
+        city: true,
+        role: true,
+        status: true,
+        updatedAt: true,
       },
     });
   }

@@ -4,17 +4,20 @@ import { UpdateUserStatusDto } from './dto/update-user-status.dto';
 import { ListUsersDto } from './dto/list-users.dto';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { RolesGuard } from '../../common/guards/roles.guard';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import {
   ApiTags,
   ApiOperation,
   ApiQuery,
   ApiParam,
   ApiBody,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 
 @ApiTags('Admin - User Management')
+@ApiBearerAuth()
 @Controller('admin/user-management')
-@UseGuards(RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class AdminUserManagementController {
   constructor(private readonly userManagementService: UserManagementService) {}
 

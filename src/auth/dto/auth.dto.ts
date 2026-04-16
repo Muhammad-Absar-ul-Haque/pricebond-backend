@@ -36,8 +36,8 @@ export class RegisterDto {
 
   @IsString()
   @IsNotEmpty({ message: 'PIN is required' })
-  @MinLength(4, { message: 'PIN must be at least 4 characters' })
-  @MaxLength(6, { message: 'PIN must not exceed 6 characters' })
+  @MinLength(4, { message: 'PIN must be 4 characters' })
+  @MaxLength(4, { message: 'PIN must be 4 characters' })
   @ApiProperty({ example: '1234', description: 'Numeric PIN' })
   pin: string;
 
@@ -71,7 +71,8 @@ export class LoginDto {
 
   @IsString()
   @IsNotEmpty({ message: 'PIN is required' })
-  @MinLength(4, { message: 'PIN must be at least 4 characters' })
+  @MinLength(4, { message: 'PIN must be 4 characters' })
+  @MaxLength(4, { message: 'PIN must be 4 characters' })
   @ApiProperty({ example: '1234', description: 'Numeric PIN' })
   pin: string;
 }
@@ -108,8 +109,8 @@ export class ResetPinDto {
 
   @IsString()
   @IsNotEmpty({ message: 'New PIN is required' })
-  @MinLength(4, { message: 'PIN must be at least 4 characters' })
-  @MaxLength(6, { message: 'PIN must not exceed 6 characters' })
+  @MinLength(4, { message: 'PIN must be 4 characters' })
+  @MaxLength(4, { message: 'PIN must be 4 characters' })
   @ApiProperty({ example: '4321', description: 'New PIN' })
   newPin: string;
 

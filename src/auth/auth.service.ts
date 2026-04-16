@@ -5,10 +5,12 @@ import {
   NotFoundException,
   ConflictException,
   ForbiddenException,
+  Logger,
 } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcrypt";
 import { PrismaService } from "../prisma/prisma.service";
+import { EmailService } from "../common/email/email.service";
 import {
   RegisterDto,
   LoginDto,
@@ -19,9 +21,12 @@ import {
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
+    private emailService: EmailService,
   ) {}
 
   // ─── Register ───────────────────────────────────────────────────────────────
@@ -139,14 +144,24 @@ export class AuthService {
       },
     });
 
-    // ── MOCK EMAIL: Print OTP to console ──────────────────────────────────────
-    console.log("");
-    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-    console.log(`📧  MOCK EMAIL — OTP for ${dto.email}`);
-    console.log(`🔑  Your OTP Code: ${otpCode}`);
-    console.log(`⏰  Expires in 5 minutes`);
-    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-    console.log("");
+    // 📧 SEND OTP via EmailService (Handles MOCK/REAL automatically)
+    const subject = "Your PrizeBond OTP Code";
+    const html = `
+      <div style="font-family: Arial, sans-serif; padding: 20px;">
+        <h2>Reset Your PIN</h2>
+        <p>Your OTP code is: <strong style="font-size: 24px; color: #4A90E2;">${otpCode}</strong></p>
+        <p>This code will expire in 5 minutes.</p>
+        <p>If you did not request this, please ignore this email.</p>
+      </div>
+    `;
+
+    try {
+      await this.emailService.sendMail(user.email, subject, html);
+    } catch (error) {
+      this.logger.error(`Failed to send OTP email to ${user.email}`, error.stack);
+      // We don't throw here to allow the user to see the "sent" message
+      // (The admin can see the OTP in logs if in MOCK mode or if failure logging is enabled)
+    }
 
     return {
       success: true,

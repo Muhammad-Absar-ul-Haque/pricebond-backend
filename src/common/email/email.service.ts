@@ -13,10 +13,14 @@ export class EmailService {
       SMTP_PORT,
       SMTP_USER,
       SMTP_PASS,
+      ENABLE_EMAIL,
     } = process.env;
 
-    this.isEmailEnabled =
+    const hasSmtpConfig =
       !!SMTP_HOST && !!SMTP_PORT && !!SMTP_USER && !!SMTP_PASS;
+
+    // Email is enabled ONLY if env says true AND we have config
+    this.isEmailEnabled = ENABLE_EMAIL === 'true' && hasSmtpConfig;
 
     if (this.isEmailEnabled) {
       this.transporter = nodemailer.createTransport({
@@ -29,9 +33,12 @@ export class EmailService {
         },
       });
 
-      this.logger.log('📧 Email service ENABLED (SMTP configured)');
+      this.logger.log('✅ Email service ENABLED (SMTP configured)');
     } else {
-      this.logger.warn('📧 Email service DISABLED (SMTP env missing)');
+      const reason = ENABLE_EMAIL !== 'true' 
+        ? 'ENABLE_EMAIL is not "true"' 
+        : 'SMTP credentials missing';
+      this.logger.warn(`📨 Email service in MOCK MODE (${reason})`);
     }
   }
 
