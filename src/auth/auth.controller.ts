@@ -69,7 +69,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current authenticated user' })
-  getMe(@CurrentUser('id') userId: string) {
+  getMe(@CurrentUser('id') userId: number) {
     return this.authService.getMe(userId);
   }
 }

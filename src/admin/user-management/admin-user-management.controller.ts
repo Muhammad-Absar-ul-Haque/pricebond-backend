@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Param, Body, UseGuards, Query } from '@nestjs/common';
+import { Controller, Get, Patch, Param, Body, UseGuards, Query, ParseIntPipe } from '@nestjs/common';
 import { UserManagementService } from './admin-user-management.service';
 import { UpdateUserStatusDto } from './dto/update-user-status.dto';
 import { ListUsersDto } from './dto/list-users.dto';
@@ -36,9 +36,9 @@ export class AdminUserManagementController {
   @Patch('users/:id/status')
   @Roles('ADMIN')
   @ApiOperation({ summary: 'Update user status (approve/reject)' })
-  @ApiParam({ name: 'id', description: 'ID of the user to update', example: 'cuid12345' })
+  @ApiParam({ name: 'id', description: 'ID of the user to update', example: 1 })
   @ApiBody({ type: UpdateUserStatusDto })
-  async updateStatus(@Param('id') userId: string, @Body() dto: UpdateUserStatusDto) {
+  async updateStatus(@Param('id', ParseIntPipe) userId: number, @Body() dto: UpdateUserStatusDto) {
     return this.userManagementService.updateUserStatus(userId, dto);
   }
 }

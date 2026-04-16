@@ -20,8 +20,19 @@ enum UserStatus {
   REJECTED
 }
 
+enum PrizeTier {
+  FIRST
+  SECOND
+  THIRD
+}
+
+enum BondStatus {
+  CHECKED
+  WINNER
+}
+
 model User {
-  id            String    @id @default(cuid())
+  id            Int       @id @default(autoincrement())
   firstName     String
   lastName      String
   email         String    @unique
@@ -37,5 +48,71 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
+  userBonds            UserBond[]
+  marketplaceListings  MarketplaceListing[] @relation("SellerListings")
+  purchasedListings    MarketplaceListing[] @relation("BuyerListings")
+
   @@map("users")
+}
+
+model Draw {
+  id              Int             @id @default(autoincrement())
+  drawNumber      String
+  date            DateTime
+  city            String
+  denomination    Int
+  fileUrl         String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  winningNumbers  WinningNumber[]
+
+  @@map("draws")
+}
+
+model WinningNumber {
+  id           Int       @id @default(autoincrement())
+  serial       String    // 6 digits
+  prizeTier    PrizeTier
+  prizeAmount  Decimal?
+  drawId       Int
+  draw         Draw      @relation(fields: [drawId], references: [id], onDelete: Cascade)
+  createdAt    DateTime  @default(now())
+
+  @@map("winning_numbers")
+}
+
+model UserBond {
+  id            Int         @id @default(autoincrement())
+  serial        String
+  denomination  Int
+  userId        Int
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status        BondStatus  @default(CHECKED)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@map("user_bonds")
+}
+
+enum MarketplaceStatus {
+  ACTIVE
+  SOLD
+  REMOVED
+}
+
+model MarketplaceListing {
+  id           Int               @id @default(autoincrement())
+  bondDetails  String?           // Optional free-text notes
+  serial       String            // Bond serial number
+  denomination Int               // Bond denomination
+  sellerId     Int
+  seller       User              @relation("SellerListings", fields: [sellerId], references: [id])
+  buyerId      Int?
+  buyer        User?             @relation("BuyerListings", fields: [buyerId], references: [id])
+  status       MarketplaceStatus @default(ACTIVE)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  @@map("marketplace_listings")
 }

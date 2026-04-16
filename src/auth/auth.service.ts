@@ -94,7 +94,7 @@ export class AuthService {
 
     // ✅ Only ACTIVE users reach here
     const payload = {
-      sub: user.id,
+      sub: String(user.id),
       email: user.email,
       role: user.role,
     };
@@ -242,7 +242,7 @@ export class AuthService {
   }
 
   // ─── Get Me (protected) ───────────────────────────────────────────────────────
-  async getMe(userId: string) {
+  async getMe(userId: number) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: {
