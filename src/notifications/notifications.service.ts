@@ -115,9 +115,12 @@ export class NotificationsService implements OnModuleInit {
   /**
    * Fetches the notification history for a specific user.
    */
-  async getUserNotifications(userId: number) {
+  async getUserNotifications(userId: number, isRead?: boolean) {
     return this.prisma.notification.findMany({
-      where: { userId },
+      where: { 
+        userId,
+        ...(isRead !== undefined && { isRead }),
+      },
       orderBy: { createdAt: 'desc' },
       take: 50, // Limit to last 50
     });
@@ -129,6 +132,16 @@ export class NotificationsService implements OnModuleInit {
   async markAsRead(notificationId: number, userId: number) {
     return this.prisma.notification.updateMany({
       where: { id: notificationId, userId },
+      data: { isRead: true },
+    });
+  }
+
+  /**
+   * Marks ALL notifications for a specific user as read.
+   */
+  async markAllAsRead(userId: number) {
+    return this.prisma.notification.updateMany({
+      where: { userId, isRead: false },
       data: { isRead: true },
     });
   }
