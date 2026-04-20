@@ -1,3 +1,8 @@
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
   Param,
   UploadedFile,
   UseInterceptors,
