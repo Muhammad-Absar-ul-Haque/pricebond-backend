@@ -1,14 +1,10 @@
-import {
-  Controller,
-  Post,
-  Body,
-  Get,
   Param,
   UploadedFile,
   UseInterceptors,
   UseGuards,
   ParseIntPipe,
   Query,
+  Delete,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
@@ -69,6 +65,22 @@ export class AdminDrawManagementController {
   @ApiQuery({ name: 'denomination', required: false, type: Number })
   findAll(@Query('denomination') denomination?: string) {
     return this.drawService.listDraws();
+  }
+
+  // GET /admin/draws/:id
+  @Get(':id')
+  @ApiOperation({ summary: 'Get draw details (admin view)' })
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.drawService.findOne(id);
+  }
+
+  // DELETE /admin/draws/:id/pdf
+  @Delete(':id/pdf')
+  @ApiOperation({
+    summary: 'Delete the official result PDF and all associated winning numbers for a draw.',
+  })
+  deletePdf(@Param('id', ParseIntPipe) id: number) {
+    return this.drawService.deletePdf(id);
   }
 
   // POST /admin/draws/:id/import-results

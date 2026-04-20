@@ -1,4 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import * as fs from 'fs';
+import * as path from 'path';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateDrawDto } from './dto/create-draw.dto';
 import { PdfParserService } from '../../common/pdf-parser/pdf-parser.service';
@@ -35,6 +37,64 @@ export class AdminDrawManagementService {
         },
       },
     });
+  }
+
+  async findOne(id: number) {
+    const draw = await this.prisma.draw.findUnique({
+      where: { id },
+      include: {
+        _count: {
+          select: { winningNumbers: true },
+        },
+        winningNumbers: {
+          orderBy: { prizeTier: 'asc' },
+          take: 100, // Limit winning numbers to avoid huge payloads in detail view
+        },
+      },
+    });
+
+    if (!draw) {
+      throw new NotFoundException('Draw not found');
+    }
+
+    return draw;
+  }
+
+  async deletePdf(id: number) {
+    const draw = await this.prisma.draw.findUnique({
+      where: { id },
+    });
+
+    if (!draw) {
+      throw new NotFoundException('Draw not found');
+    }
+
+    // 1. Delete physical file if it's stored locally in /uploads
+    if (draw.resultFileUrl && draw.resultFileUrl.includes('/uploads/')) {
+      try {
+        const fileName = draw.resultFileUrl.split('/').pop();
+        const filePath = path.join(process.cwd(), 'uploads', fileName);
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+          this.logger.log(`Deleted local file: ${filePath}`);
+        }
+      } catch (err) {
+        this.logger.error(`Failed to delete local file: ${err.message}`);
+      }
+    }
+
+    // 2. Atomic: Clear resultFileUrl and delete winning numbers
+    await this.prisma.$transaction([
+      this.prisma.draw.update({
+        where: { id },
+        data: { resultFileUrl: null },
+      }),
+      this.prisma.winningNumber.deleteMany({
+        where: { drawId: id },
+      }),
+    ]);
+
+    return { message: 'Results PDF and associated winning numbers deleted successfully' };
   }
 
   async importResultsFromPdf(drawId: number, file: Express.Multer.File, fileUrl?: string) {
