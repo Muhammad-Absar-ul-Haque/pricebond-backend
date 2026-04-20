@@ -3,7 +3,8 @@ import { PrismaService } from "../../prisma/prisma.service";
 import { Prisma } from "@prisma/client";
 import { EmailService } from "../../common/email/email.service";
 import { UpdateUserStatusDto } from "./dto/update-user-status.dto";
-import { UserStatus } from '@prisma/client';
+import { UserStatus, NotificationType } from '@prisma/client';
+import { NotificationsService } from "../../notifications/notifications.service";
 
 @Injectable()
 export class UserManagementService {
@@ -12,6 +13,7 @@ export class UserManagementService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly emailService: EmailService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async listUsers(status?: UserStatus) {
@@ -54,6 +56,9 @@ export class UserManagementService {
     // 📧 Send email after status change -- Handled inside sendStatusEmail (with logging)
     await this.sendStatusEmail(updatedUser.email, dto);
 
+    // 📱 Send Push Notification
+    await this.sendPushNotification(updatedUser.id, dto.status);
+
     return {
       message: "User status updated successfully",
       userId: updatedUser.id,
@@ -90,6 +95,32 @@ export class UserManagementService {
         this.logger.error(`SUBJECT: ${subject}`);
         this.logger.error(`BODY: ${html}`);
         this.logger.error(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+      }
+    }
+  }
+
+  private async sendPushNotification(userId: number, status: UserStatus) {
+    let title = "";
+    let body = "";
+
+    if (status === UserStatus.ACTIVE) {
+      title = "Account Approved! 🎉";
+      body = "Your PrizeBond account has been approved. You can now login and manage your bonds.";
+    } else if (status === UserStatus.REJECTED) {
+      title = "Account Status ⚠️";
+      body = "Your account application has been rejected. Please contact support for more information.";
+    }
+
+    if (title && body) {
+      try {
+        await this.notificationsService.sendPushNotification(
+          userId,
+          title,
+          body,
+          NotificationType.USER_STATUS,
+        );
+      } catch (error) {
+        this.logger.error(`Failed to send push notification to user ${userId}: ${error.message}`);
       }
     }
   }

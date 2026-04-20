@@ -31,6 +31,13 @@ enum BondStatus {
   WINNER
 }
 
+enum NotificationType {
+  USER_STATUS
+  WIN_ALERT
+  MARKETPLACE
+  SYSTEM
+}
+
 model User {
   id            Int       @id @default(autoincrement())
   firstName     String
@@ -52,6 +59,7 @@ model User {
   userBonds            UserBond[]
   marketplaceListings  MarketplaceListing[] @relation("SellerListings")
   purchasedListings    MarketplaceListing[] @relation("BuyerListings")
+  notifications        Notification[]
 
   @@map("users")
 }
@@ -117,4 +125,17 @@ model MarketplaceListing {
   updatedAt    DateTime          @updatedAt
 
   @@map("marketplace_listings")
+}
+
+model Notification {
+  id        Int              @id @default(autoincrement())
+  userId    Int
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  body      String
+  type      NotificationType
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  @@map("notifications")
 }

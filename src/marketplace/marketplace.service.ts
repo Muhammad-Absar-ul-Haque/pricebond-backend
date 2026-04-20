@@ -7,11 +7,15 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateListingDto } from './dto/create-listing.dto';
 import { UpdateListingStatusDto } from './dto/update-listing-status.dto';
-import { MarketplaceStatus, BondStatus } from '@prisma/client';
+import { MarketplaceStatus, BondStatus, NotificationType } from '@prisma/client';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class MarketplaceService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notifications: NotificationsService,
+  ) {}
 
   /**
    * Create a new marketplace listing for the authenticated seller.
@@ -182,6 +186,27 @@ export class MarketplaceService {
             denomination: listing.denomination,
           },
         });
+
+        // 📱 Send Push Notifications (non-blocking outside the core transaction but logically part of the process)
+        // Note: In a real prod app, you might emit an event or use a queue for this.
+        
+        // Notify Buyer
+        this.notifications.sendPushNotification(
+          dto.buyerId,
+          "New Bond Transferred 🎁",
+          `Bond ${listing.serial} (${listing.denomination}) has been transferred to your account from ${updatedListing.seller.firstName}.`,
+          NotificationType.MARKETPLACE,
+          { listingId: String(listingId), serial: listing.serial }
+        ).catch(err => console.error('Notification failed for buyer:', err));
+
+        // Notify Seller
+        this.notifications.sendPushNotification(
+          sellerId,
+          "Listing Sold! 💰",
+          `Your listing for bond ${listing.serial} has been successfully marked as sold to ${updatedListing.buyer.firstName}.`,
+          NotificationType.MARKETPLACE,
+          { listingId: String(listingId), serial: listing.serial }
+        ).catch(err => console.error('Notification failed for seller:', err));
 
         return updatedListing;
       });

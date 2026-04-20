@@ -7,6 +7,7 @@ import { AdminModule } from './admin/admin.module';
 import { DrawsModule } from './draws/draws.module';
 import { UserBondsModule } from './user-bonds/user-bonds.module';
 import { MarketplaceModule } from './marketplace/marketplace.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { MarketplaceModule } from './marketplace/marketplace.module';
     DrawsModule,
     UserBondsModule,
     MarketplaceModule,
+    NotificationsModule,
   ],
 })
 export class AppModule {}
