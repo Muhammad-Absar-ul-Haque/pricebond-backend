@@ -75,6 +75,15 @@ export class LoginDto {
   @MaxLength(4, { message: 'PIN must be 4 characters' })
   @ApiProperty({ example: '1234', description: 'Numeric PIN' })
   pin: string;
+
+  @IsString()
+  @IsOptional()
+  @ApiProperty({
+    example: 'fcm_token_string_here',
+    description: 'Firebase Cloud Messaging token for push notifications',
+    required: false,
+  })
+  fcmToken?: string;
 }
 
 // ─── Send OTP DTO ─────────────────────────────────────────────────────────────

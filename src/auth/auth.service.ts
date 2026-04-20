@@ -98,6 +98,15 @@ export class AuthService {
     }
 
     // ✅ Only ACTIVE users reach here
+
+    // 💾 Save FCM token if provided (updates on every login to keep it fresh)
+    if (dto.fcmToken) {
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { fcmToken: dto.fcmToken },
+      });
+    }
+
     const payload = {
       sub: String(user.id),
       email: user.email,

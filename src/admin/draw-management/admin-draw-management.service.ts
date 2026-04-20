@@ -37,7 +37,7 @@ export class AdminDrawManagementService {
     });
   }
 
-  async importResultsFromPdf(drawId: number, file: Express.Multer.File) {
+  async importResultsFromPdf(drawId: number, file: Express.Multer.File, fileUrl?: string) {
     const draw = await this.prisma.draw.findUnique({
       where: { id: drawId },
     });
@@ -84,6 +84,14 @@ export class AdminDrawManagementService {
       this.prisma.winningNumber.createMany({ data: winnersToInsert }),
     ]);
 
+    // 📎 Persist the result PDF URL so app users can download it
+    if (fileUrl) {
+      await this.prisma.draw.update({
+        where: { id: drawId },
+        data: { resultFileUrl: fileUrl },
+      });
+    }
+
     // 🕵️ Trigger Scrutiny for User Bonds
     const newWinnersCount = await this.scrutiny.scrutinizeDraw(drawId);
 
@@ -96,6 +104,7 @@ export class AdminDrawManagementService {
         third: parsedData.winners.third.serials.length,
         newUserWinners: newWinnersCount,
       },
+      resultFileUrl: fileUrl ?? null,
     };
   }
 }
