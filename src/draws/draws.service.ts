@@ -7,9 +7,25 @@ export class DrawsService {
   constructor(private readonly prisma: PrismaService) {}
 
   // ─── List All Draws ──────────────────────────────────────────────────────────
-  async listDraws(denomination?: number) {
+  async listDraws(
+    denomination?: number,
+    onlyWithResults = false,
+    city?: string,
+    date?: string,
+  ) {
+    const where: any = {};
+    if (denomination) where.denomination = denomination;
+    if (onlyWithResults) where.resultFileUrl = { not: null };
+    if (city) where.city = { contains: city, mode: "insensitive" };
+    if (date) {
+      const startDate = new Date(date);
+      const endDate = new Date(date);
+      endDate.setHours(23, 59, 59, 999);
+      where.date = { gte: startDate, lte: endDate };
+    }
+
     const draws = await this.prisma.draw.findMany({
-      where: denomination ? { denomination } : {},
+      where,
       orderBy: { date: "desc" },
       select: {
         id: true,
@@ -48,14 +64,8 @@ export class DrawsService {
     const draw = await this.prisma.draw.findUnique({
       where: { id: drawId },
       include: {
-        winningNumbers: {
-          orderBy: { prizeTier: "asc" },
-          select: {
-            id: true,
-            serial: true,
-            prizeTier: true,
-            prizeAmount: true,
-          },
+        _count: {
+          select: { winningNumbers: true },
         },
       },
     });
@@ -63,19 +73,6 @@ export class DrawsService {
     if (!draw) {
       throw new NotFoundException(`Draw with id ${drawId} not found.`);
     }
-
-    // Group winning numbers by tier for convenience
-    const grouped = {
-      FIRST: draw.winningNumbers
-        .filter((w) => w.prizeTier === "FIRST")
-        .map((w) => ({ serial: w.serial, prizeAmount: w.prizeAmount })),
-      SECOND: draw.winningNumbers
-        .filter((w) => w.prizeTier === "SECOND")
-        .map((w) => ({ serial: w.serial, prizeAmount: w.prizeAmount })),
-      THIRD: draw.winningNumbers
-        .filter((w) => w.prizeTier === "THIRD")
-        .map((w) => ({ serial: w.serial, prizeAmount: w.prizeAmount })),
-    };
 
     return {
       success: true,
@@ -88,10 +85,40 @@ export class DrawsService {
         hasResult: !!draw.resultFileUrl,
         fileUrl: draw.fileUrl ?? null,
         resultFileUrl: draw.resultFileUrl ?? null,
-        resultPdfUrl: draw.resultFileUrl ?? null, // ← downloadable PDF URL
-        totalWinners: draw.winningNumbers.length,
-        winners: grouped,
+        resultPdfUrl: draw.resultFileUrl ?? null,
+        totalWinners: draw._count.winningNumbers,
       },
+    };
+  }
+
+  // ─── Get Schedule ─────────────────────────────────────────────────────────────
+  async getSchedule(year: number, denomination?: number) {
+    const startDate = new Date(`${year}-01-01`);
+    const endDate = new Date(`${year}-12-31T23:59:59.999Z`);
+
+    const draws = await this.prisma.draw.findMany({
+      where: {
+        date: {
+          gte: startDate,
+          lte: endDate,
+        },
+        ...(denomination ? { denomination } : {}),
+      },
+      orderBy: { date: "asc" },
+    });
+
+    return {
+      success: true,
+      year,
+      total: draws.length,
+      schedule: draws.map((d) => ({
+        id: d.id,
+        drawNumber: d.drawNumber,
+        date: d.date,
+        city: d.city,
+        denomination: d.denomination,
+        hasResult: !!d.resultFileUrl,
+      })),
     };
   }
 

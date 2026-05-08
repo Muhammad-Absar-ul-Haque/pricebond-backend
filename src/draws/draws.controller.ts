@@ -8,12 +8,34 @@ import { CheckResultDto } from "./dto/check-result.dto";
 export class DrawsController {
   constructor(private readonly drawsService: DrawsService) {}
 
-  // GET /results  — list all draws (with hasResult & resultPdfUrl)
   @Get()
-  @ApiOperation({ summary: "List all prize bond draws" })
+  @ApiOperation({ summary: "List prize bond draws with available results" })
   @ApiQuery({ name: "denomination", required: false, type: Number })
-  findAll(@Query("denomination") denomination?: string) {
+  @ApiQuery({ name: "city", required: false, type: String })
+  @ApiQuery({ name: "date", required: false, type: String, example: "2026-01-15" })
+  findAll(
+    @Query("denomination") denomination?: string,
+    @Query("city") city?: string,
+    @Query("date") date?: string,
+  ) {
     return this.drawsService.listDraws(
+      denomination ? +denomination : undefined,
+      true, // onlyWithResults
+      city,
+      date,
+    );
+  }
+
+  @Get("schedule")
+  @ApiOperation({ summary: "Get annual draw schedule" })
+  @ApiQuery({ name: "year", required: true, type: Number, example: 2026 })
+  @ApiQuery({ name: "denomination", required: false, type: Number })
+  getSchedule(
+    @Query("year", ParseIntPipe) year: number,
+    @Query("denomination") denomination?: string,
+  ) {
+    return this.drawsService.getSchedule(
+      year,
       denomination ? +denomination : undefined,
     );
   }

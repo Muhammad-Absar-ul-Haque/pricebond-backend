@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateDrawDto } from './dto/create-draw.dto';
+import { BulkCreateDrawDto } from './dto/bulk-create-draw.dto';
 import { PdfParserService } from '../../common/pdf-parser/pdf-parser.service';
 import { PrizeTier } from '@prisma/client';
 import { ScrutinyService } from '../../common/scrutiny/scrutiny.service';
@@ -28,8 +29,21 @@ export class AdminDrawManagementService {
     });
   }
 
+  async bulkCreateDraws(dto: BulkCreateDrawDto) {
+    const data = dto.draws.map((d) => ({
+      drawNumber: d.drawNumber,
+      date: new Date(d.date),
+      city: d.city,
+      denomination: d.denomination,
+    }));
+
+    return this.prisma.draw.createMany({
+      data,
+    });
+  }
+
   async listDraws() {
-    return this.prisma.draw.findMany({
+    const draws = await this.prisma.draw.findMany({
       orderBy: { date: 'desc' },
       include: {
         _count: {
@@ -37,6 +51,11 @@ export class AdminDrawManagementService {
         },
       },
     });
+
+    return draws.map((d) => ({
+      ...d,
+      resultPdfUrl: d.resultFileUrl,
+    }));
   }
 
   async findOne(id: number) {
@@ -46,10 +65,6 @@ export class AdminDrawManagementService {
         _count: {
           select: { winningNumbers: true },
         },
-        winningNumbers: {
-          orderBy: { prizeTier: 'asc' },
-          take: 100, // Limit winning numbers to avoid huge payloads in detail view
-        },
       },
     });
 
@@ -57,7 +72,21 @@ export class AdminDrawManagementService {
       throw new NotFoundException('Draw not found');
     }
 
-    return draw;
+    return {
+      success: true,
+      draw: {
+        id: draw.id,
+        drawNumber: draw.drawNumber,
+        date: draw.date,
+        city: draw.city,
+        denomination: draw.denomination,
+        hasResult: !!draw.resultFileUrl,
+        fileUrl: draw.fileUrl ?? null,
+        resultFileUrl: draw.resultFileUrl ?? null,
+        resultPdfUrl: draw.resultFileUrl ?? null,
+        totalWinners: draw._count.winningNumbers,
+      },
+    };
   }
 
   async deletePdf(id: number) {

@@ -22,6 +22,7 @@ import {
 } from '@nestjs/swagger';
 import { AdminDrawManagementService } from './admin-draw-management.service';
 import { CreateDrawDto } from './dto/create-draw.dto';
+import { BulkCreateDrawDto } from './dto/bulk-create-draw.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -64,11 +65,17 @@ export class AdminDrawManagementController {
     private readonly cloudinaryService: CloudinaryService,
   ) {}
 
-  // POST /admin/draws
   @Post()
   @ApiOperation({ summary: 'Create a new draw' })
   create(@Body() dto: CreateDrawDto) {
     return this.drawService.createDraw(dto);
+  }
+
+  // POST /admin/draws/bulk
+  @Post('bulk')
+  @ApiOperation({ summary: 'Bulk create draws (schedule)' })
+  bulkCreate(@Body() dto: BulkCreateDrawDto) {
+    return this.drawService.bulkCreateDraws(dto);
   }
 
   // GET /admin/draws
