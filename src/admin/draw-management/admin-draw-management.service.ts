@@ -42,21 +42,47 @@ export class AdminDrawManagementService {
     });
   }
 
-  async listDraws() {
-    const draws = await this.prisma.draw.findMany({
+  // Service
+async listDraws(params: {
+  denomination?: number;
+  page: number;
+  limit: number;
+}) {
+  const { denomination, page, limit } = params;
+  const skip = (page - 1) * limit;
+
+  const where = denomination ? { denomination } : {};
+
+  const [draws, total] = await this.prisma.$transaction([
+    this.prisma.draw.findMany({
+      where,
       orderBy: { date: 'desc' },
+      skip,
+      take: limit,
       include: {
         _count: {
           select: { winningNumbers: true },
         },
       },
-    });
+    }),
+    this.prisma.draw.count({ where }),
+  ]);
 
-    return draws.map((d) => ({
+  return {
+    data: draws.map((d) => ({
       ...d,
       resultPdfUrl: d.resultFileUrl,
-    }));
-  }
+    })),
+    meta: {
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+      hasNextPage: page < Math.ceil(total / limit),
+      hasPrevPage: page > 1,
+    },
+  };
+}
 
   async findOne(id: number) {
     const draw = await this.prisma.draw.findUnique({
@@ -108,7 +134,7 @@ export class AdminDrawManagementService {
           this.logger.log(`Deleted local file: ${filePath}`);
         }
       } catch (err) {
-        this.logger.error(`Failed to delete local file: ${err.message}`);
+        this.logger.error(`Failed to delete local file: ${(err as Error).message}`);
       }
     }
 

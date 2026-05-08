@@ -59,7 +59,36 @@ Requires a valid Admin JWT token in the `Authorization: Bearer <token>` header.
 ### List All Draws (Admin View)
 `GET /admin/draws`
 
-Returns all draws. If a result is available, `resultPdfUrl` will contain the download link for the admin to view/download.
+Supports pagination and filtering by denomination.
+
+**Query Parameters:**
+- `page` (optional): Page number (default: 1).
+- `limit` (optional): Items per page (default: 10).
+- `denomination` (optional): Filter by bond value (e.g., 100, 750, 1500).
+
+**Response Example:**
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "drawNumber": "105",
+      "date": "2026-01-15T00:00:00.000Z",
+      "city": "Karachi",
+      "denomination": 750,
+      "resultPdfUrl": "https://res.cloudinary.com/..."
+    }
+  ],
+  "meta": {
+    "total": 45,
+    "page": 1,
+    "limit": 10,
+    "totalPages": 5,
+    "hasNextPage": true,
+    "hasPrevPage": false
+  }
+}
+```
 
 ### Get Draw Detail
 `GET /admin/draws/:id`
@@ -127,3 +156,4 @@ Once a draw occurs, you must upload the official PDF result to extract winning n
 - **Schedule Management**: Create a simple CSV uploader on your admin dashboard that maps to the `bulk` endpoint.
 - **Result Processing**: Show a loading indicator during PDF import, as the server parses thousands of numbers and sends push notifications.
 - **Admin Downloads**: Use the `resultPdfUrl` returned in the list and detail views to allow admins to re-download official result files.
+- **Pagination**: Use the `meta` object in the response to implement a standard pagination control (Prev/Next/Page Numbers) for the draw list.

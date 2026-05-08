@@ -79,13 +79,23 @@ export class AdminDrawManagementController {
   }
 
   // GET /admin/draws
-  @Get()
-  @ApiOperation({ summary: 'List all draws (admin view)' })
-  @ApiQuery({ name: 'denomination', required: false, type: Number })
-  findAll(@Query('denomination') denomination?: string) {
-    return this.drawService.listDraws();
-  }
-
+// Controller
+@Get()
+@ApiOperation({ summary: 'List all draws (admin view)' })
+@ApiQuery({ name: 'denomination', required: false, type: Number })
+@ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
+@ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
+findAll(
+  @Query('denomination') denomination?: string,
+  @Query('page') page?: string,
+  @Query('limit') limit?: string,
+) {
+  return this.drawService.listDraws({
+    denomination: denomination ? Number(denomination) : undefined,
+    page: page ? Number(page) : 1,
+    limit: limit ? Number(limit) : 10,
+  });
+}
   // GET /admin/draws/:id
   @Get(':id')
   @ApiOperation({ summary: 'Get draw details (admin view)' })
