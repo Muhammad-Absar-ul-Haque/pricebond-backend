@@ -1,6 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { CheckResultDto } from './dto/check-result.dto';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { CheckResultDto } from "./dto/check-result.dto";
 
 @Injectable()
 export class DrawsService {
@@ -10,7 +10,7 @@ export class DrawsService {
   async listDraws(denomination?: number) {
     const draws = await this.prisma.draw.findMany({
       where: denomination ? { denomination } : {},
-      orderBy: { date: 'desc' },
+      orderBy: { date: "desc" },
       select: {
         id: true,
         drawNumber: true,
@@ -35,6 +35,8 @@ export class DrawsService {
         city: d.city,
         denomination: d.denomination,
         hasResult: !!d.resultFileUrl,
+        fileUrl: d.fileUrl ?? null,
+        resultFileUrl: d.resultFileUrl ?? null,
         resultPdfUrl: d.resultFileUrl ?? null,
         winningNumbersCount: d._count.winningNumbers,
       })),
@@ -47,7 +49,7 @@ export class DrawsService {
       where: { id: drawId },
       include: {
         winningNumbers: {
-          orderBy: { prizeTier: 'asc' },
+          orderBy: { prizeTier: "asc" },
           select: {
             id: true,
             serial: true,
@@ -65,13 +67,13 @@ export class DrawsService {
     // Group winning numbers by tier for convenience
     const grouped = {
       FIRST: draw.winningNumbers
-        .filter((w) => w.prizeTier === 'FIRST')
+        .filter((w) => w.prizeTier === "FIRST")
         .map((w) => ({ serial: w.serial, prizeAmount: w.prizeAmount })),
       SECOND: draw.winningNumbers
-        .filter((w) => w.prizeTier === 'SECOND')
+        .filter((w) => w.prizeTier === "SECOND")
         .map((w) => ({ serial: w.serial, prizeAmount: w.prizeAmount })),
       THIRD: draw.winningNumbers
-        .filter((w) => w.prizeTier === 'THIRD')
+        .filter((w) => w.prizeTier === "THIRD")
         .map((w) => ({ serial: w.serial, prizeAmount: w.prizeAmount })),
     };
 
@@ -84,7 +86,9 @@ export class DrawsService {
         city: draw.city,
         denomination: draw.denomination,
         hasResult: !!draw.resultFileUrl,
-        resultPdfUrl: draw.resultFileUrl ?? null,   // ← downloadable PDF URL
+        fileUrl: draw.fileUrl ?? null,
+        resultFileUrl: draw.resultFileUrl ?? null,
+        resultPdfUrl: draw.resultFileUrl ?? null, // ← downloadable PDF URL
         totalWinners: draw.winningNumbers.length,
         winners: grouped,
       },
@@ -108,7 +112,7 @@ export class DrawsService {
     if (winningBonds.length === 0) {
       return {
         isWinner: false,
-        message: 'No result found for this number in our record.',
+        message: "No result found for this number in our record.",
       };
     }
 
