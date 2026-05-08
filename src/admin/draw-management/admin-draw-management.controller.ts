@@ -28,6 +28,8 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { Role } from '@prisma/client';
 import { IsOptional, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
 
 // DTO for the multipart body that optionally carries a pre-signed/cloud URL
 class ImportResultBodyDto {
@@ -88,7 +90,6 @@ export class AdminDrawManagementController {
     return this.drawService.deletePdf(id);
   }
 
-  // POST /admin/draws/:id/import-results
   @Post(':id/import-results')
   @ApiOperation({
     summary:
@@ -96,7 +97,17 @@ export class AdminDrawManagementController {
   })
   @ApiConsumes('multipart/form-data')
   @ApiBody({ type: ImportResultBodyDto })
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: './uploads',
+        filename: (req, file, cb) => {
+          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+          cb(null, `${uniqueSuffix}${extname(file.originalname)}`);
+        },
+      }),
+    }),
+  )
   async importResults(
     @Param('id', ParseIntPipe) id: number,
     @UploadedFile() file: Express.Multer.File,

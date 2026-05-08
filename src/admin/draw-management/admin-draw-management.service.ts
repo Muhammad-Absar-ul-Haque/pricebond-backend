@@ -106,7 +106,8 @@ export class AdminDrawManagementService {
       throw new NotFoundException('Draw not found');
     }
 
-    const parsedData = await this.pdfParser.parsePrizeBondPdf(file.buffer);
+    const buffer = file.buffer || fs.readFileSync(file.path);
+    const parsedData = await this.pdfParser.parsePrizeBondPdf(buffer);
 
     // Validation
     if (parsedData.denomination !== draw.denomination) {
