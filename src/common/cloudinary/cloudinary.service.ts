@@ -16,9 +16,8 @@ export class CloudinaryService {
     try {
       const result = await cloudinary.uploader.upload(filePath, {
         folder: 'prizebond_results',
-        resource_type: 'auto', // Use 'auto' instead of 'raw'
-        use_filename: true,
-        unique_filename: true,
+        resource_type: 'raw', // PDF must be raw for best compatibility
+        type: 'upload',      // Explicitly set as a public upload
         access_mode: 'public',
       });
       return result.secure_url;
