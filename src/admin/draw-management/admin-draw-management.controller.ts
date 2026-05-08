@@ -121,18 +121,18 @@ export class AdminDrawManagementController {
     // 1. Upload to Cloudinary if a file was provided
     let fileUrl = resultFileUrl;
     if (file) {
-      try {
-        fileUrl = await this.cloudinaryService.uploadPdf(file.path);
-        // Clean up: delete the local file after uploading to the cloud
-        fs.unlinkSync(file.path);
-      } catch (err) {
-        // If upload fails, still try to clean up the local file
-        if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
-        throw err;
-      }
+      fileUrl = await this.cloudinaryService.uploadPdf(file.path);
     }
 
-    return this.drawService.importResultsFromPdf(id, file, fileUrl);
+    // 2. Import results (this reads the file from disk)
+    const result = await this.drawService.importResultsFromPdf(id, file, fileUrl);
+
+    // 3. Clean up: delete the local file now that we are done with it
+    if (file && fs.existsSync(file.path)) {
+      fs.unlinkSync(file.path);
+    }
+
+    return result;
   }
 }
 
