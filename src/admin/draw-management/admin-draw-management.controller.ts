@@ -30,6 +30,8 @@ import { IsOptional, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
+import * as fs from 'fs';
+import { CloudinaryService } from '../../common/cloudinary/cloudinary.service';
 
 // DTO for the multipart body that optionally carries a pre-signed/cloud URL
 class ImportResultBodyDto {
@@ -57,7 +59,10 @@ class ImportResultBodyDto {
 @Roles(Role.ADMIN)
 @Controller('admin/draws')
 export class AdminDrawManagementController {
-  constructor(private readonly drawService: AdminDrawManagementService) {}
+  constructor(
+    private readonly drawService: AdminDrawManagementService,
+    private readonly cloudinaryService: CloudinaryService,
+  ) {}
 
   // POST /admin/draws
   @Post()
@@ -113,13 +118,19 @@ export class AdminDrawManagementController {
     @UploadedFile() file: Express.Multer.File,
     @Body('resultFileUrl') resultFileUrl?: string,
   ) {
-    // Build a fallback URL from the file's stored path or original name.
-    // In production replace this with your actual file-storage URL (S3, Cloudinary, etc.).
-    const fileUrl =
-      resultFileUrl ||
-      (file.path
-        ? `${process.env.APP_URL || 'http://localhost:3000'}/uploads/${file.filename ?? file.originalname}`
-        : undefined);
+    // 1. Upload to Cloudinary if a file was provided
+    let fileUrl = resultFileUrl;
+    if (file) {
+      try {
+        fileUrl = await this.cloudinaryService.uploadPdf(file.path);
+        // Clean up: delete the local file after uploading to the cloud
+        fs.unlinkSync(file.path);
+      } catch (err) {
+        // If upload fails, still try to clean up the local file
+        if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+        throw err;
+      }
+    }
 
     return this.drawService.importResultsFromPdf(id, file, fileUrl);
   }

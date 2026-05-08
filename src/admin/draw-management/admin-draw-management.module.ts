@@ -3,9 +3,10 @@ import { AdminDrawManagementController } from './admin-draw-management.controlle
 import { AdminDrawManagementService } from './admin-draw-management.service';
 import { PdfParserModule } from '../../common/pdf-parser/pdf-parser.module';
 import { ScrutinyModule } from '../../common/scrutiny/scrutiny.module';
+import { CloudinaryModule } from '../../common/cloudinary/cloudinary.module';
 
 @Module({
-  imports: [PdfParserModule, ScrutinyModule],
+  imports: [PdfParserModule, ScrutinyModule, CloudinaryModule],
   controllers: [AdminDrawManagementController],
   providers: [AdminDrawManagementService],
 })
