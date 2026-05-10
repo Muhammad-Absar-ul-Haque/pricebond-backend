@@ -45,7 +45,11 @@ export class PdfParserService {
     // 4. Extract Winners using Prize Headers as anchors
     const firstPrizeText = this.getSection(text, 'First Prize', 'Second Prize');
     const secondPrizeText = this.getSection(text, 'Second Prize', 'Third Prize');
-    const thirdPrizeText = this.getSection(text, 'Third Prize', 'List of');
+    
+    // For the third prize, we take everything from "Third Prize" to the end of the document.
+    // This prevents truncation if phrases like "List of" appear before the actual numbers.
+    const thirdPrizeStartIndex = text.indexOf('Third Prize');
+    const thirdPrizeText = thirdPrizeStartIndex !== -1 ? text.substring(thirdPrizeStartIndex) : '';
 
     const winners = {
       first: {
