@@ -7,6 +7,8 @@ import { BulkCreateDrawDto } from './dto/bulk-create-draw.dto';
 import { PdfParserService } from '../../common/pdf-parser/pdf-parser.service';
 import { PrizeTier } from '@prisma/client';
 import { ScrutinyService } from '../../common/scrutiny/scrutiny.service';
+import { NotificationsService } from '../../notifications/notifications.service';
+import { NotificationType } from '@prisma/client';
 
 @Injectable()
 export class AdminDrawManagementService {
@@ -16,6 +18,7 @@ export class AdminDrawManagementService {
     private readonly prisma: PrismaService,
     private readonly pdfParser: PdfParserService,
     private readonly scrutiny: ScrutinyService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   async createDraw(dto: CreateDrawDto) {
@@ -37,9 +40,18 @@ export class AdminDrawManagementService {
       denomination: d.denomination,
     }));
 
-    return this.prisma.draw.createMany({
+    const result = await this.prisma.draw.createMany({
       data,
     });
+
+    // Broadcast notification to all active users
+    await this.notifications.broadcastNotification(
+      'New Draw Schedule Available! 📅',
+      `The official draw schedule has been updated with ${dto.draws.length} new draws. Check it out now!`,
+      NotificationType.SYSTEM,
+    ).catch(e => this.logger.error(`Failed to broadcast schedule notification: ${e.message}`));
+
+    return result;
   }
 
   // Service
@@ -210,6 +222,14 @@ async listDraws(params: {
 
     // 🕵️ Trigger Scrutiny for User Bonds
     const newWinnersCount = await this.scrutiny.scrutinizeDraw(drawId);
+
+    // 📢 Broadcast Notification to all users
+    await this.notifications.broadcastNotification(
+      'Draw Results Announced! 📢',
+      `The official results for the ${draw.denomination} denomination draw in ${draw.city} are out. Check your bonds now!`,
+      NotificationType.SYSTEM,
+      { drawId: String(draw.id) }
+    ).catch(e => this.logger.error(`Failed to broadcast result notification: ${e.message}`));
 
     return {
       message: 'Results imported and scrutiny complete',

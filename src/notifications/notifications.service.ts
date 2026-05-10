@@ -113,6 +113,45 @@ export class NotificationsService implements OnModuleInit {
   }
 
   /**
+   * Broadcasts a push notification to all active users.
+   */
+  async broadcastNotification(
+    title: string,
+    body: string,
+    type: NotificationType,
+    data: any = {},
+  ) {
+    this.logger.log(`Broadcasting notification: ${title}`);
+
+    // Fetch all active users (you could limit this to those with fcmToken, but we also want to record in DB)
+    const users = await this.prisma.user.findMany({
+      where: { status: 'ACTIVE' },
+      select: { id: true },
+    });
+
+    if (users.length === 0) {
+      this.logger.log('No active users found to broadcast to.');
+      return;
+    }
+
+    // Send notifications concurrently (or sequentially if too many, but Promise.all is fine for now)
+    // We'll process them in small batches to avoid overloading the DB/Firebase
+    const batchSize = 100;
+    for (let i = 0; i < users.length; i += batchSize) {
+      const batch = users.slice(i, i + batchSize);
+      await Promise.all(
+        batch.map((user) =>
+          this.sendPushNotification(user.id, title, body, type, data).catch((e) =>
+            this.logger.error(`Error broadcasting to user ${user.id}: ${e.message}`)
+          )
+        )
+      );
+    }
+
+    this.logger.log(`Broadcast complete to ${users.length} users.`);
+  }
+
+  /**
    * Fetches the notification history for a specific user.
    */
   async getUserNotifications(userId: number, isRead?: boolean) {
