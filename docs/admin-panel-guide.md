@@ -152,6 +152,73 @@ Once a draw occurs, you must upload the official PDF result to extract winning n
 
 ---
 
+## 5. Marketplace Management
+
+Allows administrators to monitor, filter, and manage all marketplace listings created by users.
+
+### List All Listings
+`GET /admin/marketplace`
+
+Supports pagination, filtering by status/denomination, and search.
+
+**Query Parameters:**
+- `page` (optional): Page number (default: 1).
+- `limit` (optional): Items per page (default: 10).
+- `status` (optional): Filter by `ACTIVE`, `SOLD`, or `REMOVED`.
+- `denomination` (optional): Filter by bond value (e.g., 750).
+- `search` (optional): Search by serial number or seller name/email.
+
+**Response Example:**
+```json
+{
+  "data": [
+    {
+      "id": 15,
+      "serial": "123456",
+      "denomination": 750,
+      "status": "ACTIVE",
+      "seller": {
+        "id": 5,
+        "firstName": "John",
+        "lastName": "Doe",
+        "email": "john@test.com"
+      },
+      "createdAt": "2026-05-10T10:00:00.000Z"
+    }
+  ],
+  "meta": {
+    "total": 45,
+    "page": 1,
+    "limit": 10,
+    "totalPages": 5,
+    "hasNextPage": true,
+    "hasPrevPage": false
+  }
+}
+```
+
+### Get Listing Detail
+`GET /admin/marketplace/:id`
+
+Returns full details including seller and buyer information (if sold).
+
+### Update Listing Status
+`PATCH /admin/marketplace/:id/status`
+
+**Request Body:**
+```json
+{
+  "status": "REMOVED"
+}
+```
+
+### Delete/Remove Listing
+`DELETE /admin/marketplace/:id`
+
+Marks the listing as `REMOVED`. This is the preferred way for admins to take down inappropriate listings.
+
+---
+
 ## Frontend Integration Tips
 - **Schedule Management**: Create a simple CSV uploader on your admin dashboard that maps to the `bulk` endpoint.
 - **Result Processing**: Show a loading indicator during PDF import, as the server parses thousands of numbers and sends push notifications.
