@@ -54,15 +54,15 @@ export class PdfParserService {
     const winners = {
       first: {
         serials: this.extractSerials(firstPrizeText),
-        amount: this.extractPrizeAmount(firstPrizeText),
+        amount: this.extractPrizeAmount(firstPrizeText, '1st'),
       },
       second: {
         serials: this.extractSerials(secondPrizeText),
-        amount: this.extractPrizeAmount(secondPrizeText),
+        amount: this.extractPrizeAmount(secondPrizeText, '2nd'),
       },
       third: {
         serials: this.extractSerials(thirdPrizeText),
-        amount: this.extractPrizeAmount(thirdPrizeText),
+        amount: this.extractPrizeAmount(thirdPrizeText, '3rd'),
       },
     };
 
@@ -91,11 +91,24 @@ export class PdfParserService {
     return matches ? [...new Set(matches)] : []; // Remove duplicates
   }
 
-  private extractPrizeAmount(text: string): number {
+  private extractPrizeAmount(text: string, positionLabel: '1st' | '2nd' | '3rd'): number {
     if (!text) return 0;
-    // Extract amount like "750,000" or "1,250" from "Rs. 750,000/-"
-    const match = text.match(/Rs\.\s*([\d,]+)\/-/);
-    if (!match) return 0;
-    return parseInt(match[1].replace(/,/g, ''), 10);
+
+    // Legacy layout: "Rs. 750,000/-"
+    const legacyMatch = text.match(/Rs\.\s*([\d,]+)\/-/);
+    if (legacyMatch) {
+      return parseInt(legacyMatch[1].replace(/,/g, ''), 10);
+    }
+
+    // Pakbond table layout: "1st  1  5,00,000  4,25,000  3,50,000"
+    // columns are Prize | Total Prizes | Prize Value | For Filer | For Non-Filer
+    // capture the Prize Value column (first number after the total-prizes count)
+    const rowMatch = text.match(new RegExp(`\\b${positionLabel}\\s+[\\d,]+\\s+([\\d,]+)`, 'i'));
+    if (rowMatch) {
+      return parseInt(rowMatch[1].replace(/,/g, ''), 10);
+    }
+
+    this.logger.warn(`Could not extract prize amount for position "${positionLabel}" — defaulting to 0. Check PDF layout.`);
+    return 0;
   }
 }

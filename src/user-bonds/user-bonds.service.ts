@@ -29,10 +29,36 @@ export class UserBondsService {
   }
 
   async listUserBonds(userId: number) {
-    return this.prisma.userBond.findMany({
+    const bonds = await this.prisma.userBond.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
     });
+
+    if (bonds.length === 0) return bonds;
+
+    const serials = [...new Set(bonds.map((b) => b.serial))];
+    const denominations = [...new Set(bonds.map((b) => b.denomination))];
+
+    const winningNumbers = await this.prisma.winningNumber.findMany({
+      where: {
+        serial: { in: serials },
+        draw: { denomination: { in: denominations } },
+      },
+      include: { draw: true },
+    });
+
+    return bonds.map((bond) => ({
+      ...bond,
+      wins: winningNumbers
+        .filter((w) => w.serial === bond.serial && w.draw.denomination === bond.denomination)
+        .map((w) => ({
+          drawNumber: w.draw.drawNumber,
+          drawDate: w.draw.date,
+          city: w.draw.city,
+          prizeTier: w.prizeTier,
+          prizeAmount: w.prizeAmount,
+        })),
+    }));
   }
 
   async removeBond(userId: number, bondId: number) {
